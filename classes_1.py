@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 import csv
 import errors1
+import soil_1
 
 def get_base_dir():
     '''Gets the base directory as reference for all relative paths.
@@ -42,6 +43,48 @@ def get_base_dir():
         #                     parent[0] = base_dir/RUFAS
         #                     parent[1] = base_dir/
         return Path(__file__).resolve().parents[1]
+#-------------------------------------------------------------------------------
+# Class: State
+#-------------------------------------------------------------------------------
+class State():
+	'''Contains information about the current state of the farm.
+
+	The state object represents the state of the farm at a certain instant in
+	time. It contains information arranged in different objects by what routine
+	they (mostly) relate to. The state object (or some of its sub-objects) will
+	be passed to routines during the simulation, which may access the
+	information in the different sub-objects in the state to use in its
+	calculations.
+	The state object should ONLY store persistent data that WILL be used in
+	future calculations and/or reports.
+	DO NOT store immediate operands or values that do not NEED to be accessed in
+	the future or in an output report in the state object.
+	'''
+
+	def __init__(self, data, config):
+		'''
+		TODO: Add DocString
+		'''
+
+		self.soil = soil_1.Soil(data['soil'], config)
+
+		#self.fieldOps = FieldOps()
+		#self.herd = Herd()
+		#self.housing = Housing()
+		#self.manure = Manure()
+
+	#---------------------------------------------------------------------------
+	# Method: annual_reset
+	#---------------------------------------------------------------------------
+	def annual_reset(self):
+		'''Annual Reset'''
+
+		self.soil.annual_reset()
+
+		#self.fieldOps.annual_reset()
+		#self.herd.annual_reset()
+		#self.housing.annual_reset()
+		#self.manure.annual_reset()
 
 #-------------------------------------------------------------------------------
 # Class: Weather
@@ -323,3 +366,57 @@ class Time():
 		self.duration = duration # Simulation duration in years
 		self.day = 1  # Current Julian Day
 		self.year = 1  # Current Year
+
+	#---------------------------------------------------------------------------
+	# Method: to_str
+	#---------------------------------------------------------------------------
+	def to_str(self):
+		'''Returns a string representation of the current time.
+
+		Returns:
+			str: a String representation of the current time in the simulation
+				in the format "Year: <year> Day: <day>"
+		'''
+
+		return "Year: {} Day: {}".format(self.year, self.day)
+
+
+
+	#---------------------------------------------------------------------------
+	# Method: advance
+	#---------------------------------------------------------------------------
+	def advance(self):
+		'''Advances the time in the simulation by 1 day
+
+		Automatically detects end of months and years
+		'''
+
+		if self.end_year():
+			self.day = 1
+			self.year += 1
+		else:
+			self.day += 1
+
+	#---------------------------------------------------------------------------
+	# Method: end_year
+	#---------------------------------------------------------------------------
+	def end_year(self):
+		'''Returns a bool signifying the end of a year.
+
+		Returns:
+			bool: True if it is the end of a year, False otherwise
+		'''
+
+		return self.day > 365
+
+	#-------------------------------------------------------------------------------
+	# Function: end_simulation
+	#-------------------------------------------------------------------------------
+	def end_simulation(self):
+	    '''Checks whether the simulation has ended
+
+	    Returns:
+	        bool: True if the simulation has ended, false otherwise
+	    '''
+
+	    return self.year > self.duration

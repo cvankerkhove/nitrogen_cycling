@@ -4,7 +4,7 @@ file = {
     {
         "StartYear" : 2008,
         "EndYear" : 2009,
-        "output_dir": "Outputs/Sample_Farm_Outputs/"
+        "output_dir": "Outputs/"
     },
 
     "weather": "nitrogen_cycling/weatherfile.csv",

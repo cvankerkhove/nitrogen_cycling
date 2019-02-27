@@ -89,10 +89,8 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
 
         # water content of the soil layer (mm)
         SW = soil.listOfSoilLayers[x].currentSoilWaterMM
-
         # field capacity water content of the soil layer (mm)
         FC = soil.listOfSoilLayers[x].fcWater
-
         # Active N mineralization rate (kg/ha; user defined)
         minRate = soil.listOfSoilLayers[x].activeMineralRate
 
@@ -359,7 +357,6 @@ def daily_soil_nitrogen_update(soil, jday, year, addedN):
         year: the year field from the instance of the Year class
     '''
     for x in range(0, len(soil.listOfSoilLayers)):
-
         # UPDATE NO3 POOL
         NO3 = soil.listOfSoilLayers[x].NO3
         NO3 -= soil.listOfSoilLayers[x].denitrification
