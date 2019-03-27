@@ -4,7 +4,7 @@ file = {
     {
         "StartYear" : 2008,
         "EndYear" : 2009,
-        "output_dir": "Outputs/"
+        "output_dir": "outputs/Sample_Farm_Outputs/"
     },
 
     "weather": "nitrogen_cycling/weatherfile.csv",
@@ -23,7 +23,7 @@ file = {
             "report_name": "Ration Report",
             "file_name": "ration_report.txt"
         },
-        "soil_nitrogen":
+        "soilnitrogen":
         {
             "active": True,
             "report_name": "Soil Nitrogen",

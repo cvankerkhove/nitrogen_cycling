@@ -227,7 +227,7 @@ class SoilNitrogen(BaseReportHandler):
     #---------------------------------------------------------------------------
     # Method: annual_update
     #---------------------------------------------------------------------------
-    def annual_update(self, state, weather, time):
+    def annual_update(self, soil, weather, time):
         '''Stores the yearly values that need to be printed in the report.'''
         pass
 
@@ -241,7 +241,6 @@ class SoilNitrogen(BaseReportHandler):
         mode = 'a+' if self.get_fPath().exists() else 'w+'
 
         with self.get_fPath().open(mode) as csvfile:
-
         # Write data day by day
             for x in range(0, len(self.julianDay)):
                 dailySoilNitrogenData = {
