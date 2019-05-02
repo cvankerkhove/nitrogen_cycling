@@ -16,8 +16,6 @@ def daily_simulation():
     '''Executes the daily simmulation routines'''
     soil_1.daily_soil_routine(s1, w1, time)
     soil_1.daily_soil_update(s1, w1, time)
-    print('CToN')
-    print(s1.CToN)
     SN.daily_update(s1, w1, time)
     time.advance()
 
@@ -37,7 +35,7 @@ time = classes_1.Time(config1.duration)
 outputhandler.initialize_output_dir("outputs/Sample_Farm_Outputs/")
 SN.initialize(s1)
 
-while not time.end_year():
+for x in range(0, 366):
     daily_simulation()
 #SN.annual_update(s1, w1, time)
 #SN.write_annual_report(time.year)

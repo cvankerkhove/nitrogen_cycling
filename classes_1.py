@@ -364,6 +364,7 @@ class Time():
 		#self.day_in_months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 		self.duration = duration # Simulation duration in years
+		self.hour = 0
 		self.day = 1  # Current Julian Day
 		self.year = 1  # Current Year
 
@@ -379,23 +380,49 @@ class Time():
 		'''
 
 		return "Year: {} Day: {}".format(self.year, self.day)
+	#---------------------------------------------------------------------------
+	# Method: advance_hour
+	#---------------------------------------------------------------------------
 
+	def advance(self):
+		'''Advances the time in the simulation by 1 hour
 
+		Automatically detects end of days, months and years
+		'''
+
+		if self.end_day():
+			self.day += 1
+			self.hour = 0
+		else:
+			self.hour += 1
 
 	#---------------------------------------------------------------------------
 	# Method: advance
 	#---------------------------------------------------------------------------
-	def advance(self):
-		'''Advances the time in the simulation by 1 day
+	'''def advance(self):
+		#Advances the time in the simulation by 1 day
+		#
+		#Automatically detects end of months and years
 
-		Automatically detects end of months and years
-		'''
 
 		if self.end_year():
 			self.day = 1
+			self.hour = 0
 			self.year += 1
 		else:
-			self.day += 1
+			self.day += 1'''
+
+	#---------------------------------------------------------------------------
+	# Method: end_day
+	#---------------------------------------------------------------------------
+	def end_day(self):
+		'''Returns a bool signifying the end of a day.
+
+		Returns:
+			bool: True if it is the end of a year, False otherwise
+		'''
+
+		return self.hour > 23
 
 	#---------------------------------------------------------------------------
 	# Method: end_year

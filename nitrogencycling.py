@@ -35,6 +35,28 @@ def daily_nitrogen_update(soil, time, weather):
 # Equations taken from SWAT 2009 documentation
 #------------------------------------------------------------------------------
 def daily_soil_nitrogen(soil, jday, year, rainfall):
+    '''Runs the hourly soil nitrogen pool simulation for a full day'''
+
+    for x in range(0, 25):
+        hourly_soil_nitrogen(soil, x, jday, year, rainfall)
+
+#---------------------------------------------------------------------------
+# Function: daily_soil_nitrogen_update
+# Updates the nitrogen pools in the soil for each layer
+#---------------------------------------------------------------------------
+def daily_soil_nitrogen_update(soil, jday, year, addedN):
+    '''
+    Description:
+        Updates the nitrogen pools in the soil for each layer.
+    Args:
+        soil: instance of the Soil class
+        jday:
+        year: the year field from the instance of the Year class
+    '''
+    for x in range(0, 25):
+        hourly_soil_nitrogen_update(soil, x, jday, year, addedN)
+
+def hourly_soil_nitrogen(soil, hour, jday, year, rainfall):
     '''
     Description:
         We will simulate 3 organic N pools (Fresh, Active, Stable) and 2 inorganic
@@ -108,18 +130,18 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
         # constant that is calculated with the C:N ratio and C:P ratio of the
         # residue, and temperature and soil water factors.
         if x == 0:
-            freshOrganicP = soil.residue * 0.0003
+            freshOrganicP = (soil.residue/24) * 0.0003
             freshOrganicP = freshOrganicP * BD * soil.listOfSoilLayers[x].bottomDepth / 100  # kg
             labileP = soil.listOfSoilLayers[x].labileP  # input
 
             if (soil.topLayerFreshN + NO3) > 0:
-                carbonToNitrogen = (0.58 * soil.residue) / (soil.topLayerFreshN + NO3)  # C:N ratio
+                carbonToNitrogen = (0.58 * (soil.residue)/24) / (soil.topLayerFreshN + NO3)  # C:N ratio
             else:
                 carbonToNitrogen = 0
 
             soil.CToN = carbonToNitrogen
 
-            carbonToPhosphorus = (0.58 * soil.residue) / (freshOrganicP + labileP)  # C:P ratio
+            carbonToPhosphorus = (0.58 * (soil.residue)/24) / (freshOrganicP + labileP)  # C:P ratio
             soil.CToP = carbonToPhosphorus
 
             # A decay rate constant (Decay) defines the fraction of residue that is
@@ -129,15 +151,15 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
                        1)
             decay = residueFactor * resComp * ((tempFac * waterFac) ** 0.5)
 
-            soil.decayRate = decay
+            soil.decayRate = (decay)
 
             # Mineralization of Fresh N (kg/ha) is then calculated as:
             # freshMin = residueFactor * freshN
             freshMin = 0.8 * decay * soil.topLayerFreshN
-            soil.freshMin = freshMin
+            soil.freshMin = (freshMin)/24
 
             freshDecomp = 0.2 * decay * soil.topLayerFreshN
-            soil.freshDecomp = freshDecomp
+            soil.freshDecomp = (freshDecomp)
 
     # 3) ----------------Nitrification and Volatilization-----------------------
         # Nitrification is the transfer of NH4 to NO3. Nitrification occurs only
@@ -169,7 +191,7 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
 
         # Total combined nitrification and volatilization (kg/ha) is:
         totNitriVolatil = NH4 * (1 - math.exp(-nitrReg - volatilReg))
-        soil.listOfSoilLayers[x].totNitriVolatil = totNitriVolatil
+        soil.listOfSoilLayers[x].totNitriVolatil = (totNitriVolatil)
 
         # Fraction of the total that is nitrification is:
         # fracNitri = 1 - math.exp(nitrFac)
@@ -181,7 +203,7 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
         # Mass of volatilization (kg/ha) is:
         volatilization = (soil.listOfSoilLayers[x].NH4 *
                           volatilReg)
-        soil.listOfSoilLayers[x].volatilization = volatilization
+        soil.listOfSoilLayers[x].volatilization = volatilization/24
 
         # Mass of nitrification (kg/ha) is:
         nitrification = (soil.listOfSoilLayers[x].NH4 - volatilization
@@ -211,18 +233,18 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
         denitrification = 0.0
         if (soil.listOfSoilLayers[x].currentSoilWaterMM >
                                     soil.listOfSoilLayers[x].satWater * 0.6):
-            denitrification = NO3 * (1 - math.exp(-denitrificationRate *
+            denitrification = NO3 * (1 - math.exp(-denitrificationRate/24 *
                                                   tempFac * OrgC))
 
-        soil.listOfSoilLayers[x].denitrification = denitrification
+        soil.listOfSoilLayers[x].denitrification = (denitrification)
 
         # Update NO3
         NO3 = max(0, NO3 - soil.listOfSoilLayers[x].denitrification)
 
         if x == 0 and SW != 0:
-            soil.runoffNO3Conc = (1 - math.exp((-SW-rainfall)/
+            soil.runoffNO3Conc = ((1 - math.exp((-SW-rainfall)/
                         (soil.listOfSoilLayers[x].satWater + rainfall))
-                       ) * NO3 / (SW+rainfall)/25
+                       ) * NO3 / (SW+rainfall)/25)
 
         # Update NO3
         if x == 0:
@@ -234,33 +256,33 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
             NO3Conc = (1 - math.exp(-SW/soil.listOfSoilLayers[x].satWater)
                        )/SW*NO3/5
 
-        soil.listOfSoilLayers[x].NO3Conc = NO3Conc
+        soil.listOfSoilLayers[x].NO3Conc = (NO3Conc)
 
 
         # Mass (kg/ha) of NO3 loss in runoff (mm) from soil layer 1 only is:
         NO3Runoff = 0.0
         if x == 0:
             NO3Runoff = soil.runoffNO3Conc * runoff
-            soil.NO3Runoff = NO3Runoff
+            soil.NO3Runoff = (NO3Runoff)/24
 
         # Mass (kg/ha) of NO3 loss in percolation water (mm) from all soil
         # layers is:
         NO3Perc = NO3Conc * perc
-        soil.listOfSoilLayers[x].NO3Perc = NO3Perc
+        soil.listOfSoilLayers[x].NO3Perc = (NO3Perc)
 
         # NH4 UPDATE
         NH4 = max(0, NH4 - totNitriVolatil)
 
         if x == 0 and SW != 0:
-            soil.runoffNH4Conc = (1 - math.exp((-SW-rainfall) /
+            soil.runoffNH4Conc = ((1 - math.exp((-SW-rainfall) /
                         (soil.listOfSoilLayers[x].satWater+rainfall))
-                        ) * NH4/(SW+rainfall)/5
+                        ) * NH4/(SW+rainfall)/5 )
 
         # Mass (kg/ha) of NH4 loss in runoff (mm) from soil layer 1 only is:
         NH4Runoff = 0.0
         if x == 0:
             NH4Runoff = soil.runoffNH4Conc * runoff
-            soil.NH4Runoff = NH4Runoff
+            soil.NH4Runoff = (NH4Runoff)
 
         # NH4 Update
         if x == 0:
@@ -269,10 +291,10 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
         # For N loss in erosion, soil N concentrations (mg/kg) for each pool except
         # NO3 are calculated as:
         if x == 0:
-            soil.freshNConc = (100 * soil.topLayerFreshN) / (BD / soil.listOfSoilLayers[x].bottomDepth)
-            soil.stableNConc = (100 * stableN) / BD / soil.listOfSoilLayers[x].bottomDepth
-            soil.NH4Conc = (100 * NH4) / BD / soil.listOfSoilLayers[x].bottomDepth
-            soil.activeNConc = (100 * activeN) / BD / soil.listOfSoilLayers[x].bottomDepth
+            soil.freshNConc = ((100 * soil.topLayerFreshN) / (BD / soil.listOfSoilLayers[x].bottomDepth))
+            soil.stableNConc = ((100 * stableN) / BD / soil.listOfSoilLayers[x].bottomDepth)
+            soil.NH4Conc = ((100 * NH4) / BD / soil.listOfSoilLayers[x].bottomDepth)
+            soil.activeNConc = ((100 * activeN) / BD / soil.listOfSoilLayers[x].bottomDepth)
 
         # Update Active N
         if x == 0:
@@ -287,21 +309,21 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
         # Mass (kg/ha) of active N loss in percolation water (mm) from all soil
         # layers is:
         activeNPerc = activeNConc * perc
-        soil.listOfSoilLayers[x].activeNPerc = activeNPerc
+        soil.listOfSoilLayers[x].activeNPerc = activeNPerc/24
 
         # Enrichment ratio
         ER = 0.0
         if Sed != 0.0:
             ER = max(1, math.exp(1.21 - 0.16 * math.log(Sed * 1000)))
-        soil.enrichmentRatio = ER
+        soil.enrichmentRatio = (ER)
 
         # N mass loss in erosion (kg/ha) is calculated as:
         if x == 0:
             if Sed > 0:
-                soil.freshNLoss = 0.001 * soil.freshNConc * Sed * ER
-                soil.activeNLoss = 0.001 * soil.activeNConc * Sed * ER
-                soil.stableNLoss = 0.001 * soil.stableNConc * Sed * ER
-                soil.NH4Loss = 0.001 * soil.NH4Conc * Sed * ER
+                soil.freshNLoss = (0.001 * soil.freshNConc * Sed * ER)/24
+                soil.activeNLoss = (0.001 * soil.activeNConc * Sed * ER)/24
+                soil.stableNLoss = (0.001 * soil.stableNConc * Sed * ER)/24
+                soil.NH4Loss = (0.001 * soil.NH4Conc * Sed * ER)/24
             else:
                 soil.freshNLoss = 0.0
                 soil.activeNLoss = 0.0
@@ -309,8 +331,8 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
                 soil.NH4Loss = 0.0
 
         # Mineralization from Active N pool is:
-        Nminact = minRate * (tempFac * waterFac) ** 0.5 * activeN
-        soil.listOfSoilLayers[x].nMinAct = Nminact
+        Nminact = minRate/24 * (tempFac * waterFac) ** 0.5 * activeN
+        soil.listOfSoilLayers[x].nMinAct = (Nminact)
 
         # Update Stable N
         stableN = max(0, stableN - soil.stableNLoss)
@@ -327,7 +349,7 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
 
         # N moves between the Active and Stable pools to maintain an equilibrium as:
         Ntrans = 0.00001 * (activeN * (1 / FracN - 1) - stableN)
-        soil.listOfSoilLayers[x].nTrans = Ntrans
+        soil.listOfSoilLayers[x].nTrans = (Ntrans)
 
         # Update NH4
         if x == 0:
@@ -337,17 +359,12 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
         NH4Conc = 0.0
         if SW != 0:
             NH4Conc = (1 - math.exp(-SW / soil.listOfSoilLayers[x].satWater)) * NH4/SW
-        soil.listOfSoilLayers[x].NH4Conc = NH4Conc
+        soil.listOfSoilLayers[x].NH4Conc = (NH4Conc)
 
         NH4Perc = NH4Conc * perc
-        soil.listOfSoilLayers[x].NH4Perc = NH4Perc
+        soil.listOfSoilLayers[x].NH4Perc = (NH4Perc)
 
-
-#---------------------------------------------------------------------------
-# Function: daily_soil_nitrogen_update
-# Updates the nitrogen pools in the soil for each layer
-#---------------------------------------------------------------------------
-def daily_soil_nitrogen_update(soil, jday, year, addedN):
+def hourly_soil_nitrogen_update(soil, hour, jday, year, addedN):
     '''
     Description:
         Updates the nitrogen pools in the soil for each layer.
@@ -356,21 +373,23 @@ def daily_soil_nitrogen_update(soil, jday, year, addedN):
         jday:
         year: the year field from the instance of the Year class
     '''
+
     for x in range(0, len(soil.listOfSoilLayers)):
+
         # UPDATE NO3 POOL
         NO3 = soil.listOfSoilLayers[x].NO3
-        NO3 -= soil.listOfSoilLayers[x].denitrification
+        NO3 -= (soil.listOfSoilLayers[x].denitrification)/24
 
         if x == 0:
-            NO3 -= soil.NO3Runoff
+            NO3 -= (soil.NO3Runoff)/24
 
         if x == 0:
-            NO3 -= soil.listOfSoilLayers[x].NO3Perc
+            NO3 -= (soil.listOfSoilLayers[x].NO3Perc)/24
         else:
-            NO3 -= soil.listOfSoilLayers[x].NO3Perc
-            NO3 += soil.listOfSoilLayers[x - 1].NO3Perc
+            NO3 -= (soil.listOfSoilLayers[x].NO3Perc)/24
+            NO3 += (soil.listOfSoilLayers[x - 1].NO3Perc)/24
 
-        NO3 += soil.listOfSoilLayers[x].nitrification
+        NO3 += (soil.listOfSoilLayers[x].nitrification)/24
         soil.listOfSoilLayers[x].NO3 = max(0, NO3)
 
         # UPDATE NH4 POOL
@@ -435,5 +454,5 @@ def daily_soil_nitrogen_update(soil, jday, year, addedN):
         # UPDATE FRESH N POOL
 
         if x==0:
-            soil.topLayerFreshN = max(0, soil.topLayerFreshN - soil.freshMin
-                                  - soil.freshDecomp - soil.freshNLoss)
+            soil.topLayerFreshN = max(0, (soil.topLayerFreshN - soil.freshMin
+                                  - soil.freshDecomp - soil.freshNLoss)/24)
